@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DMart Checklist</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f2937">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DMart List">
+<style>
+  :root {
+    --grocery: #f59e0b;
+    --oils: #10b981;
+    --personal: #ec4899;
+    --home: #3b82f6;
+    --bg: #f8f7f4;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 90px;
+  }
+  header {
+    background: #1f2937;
+    color: white;
+    padding: max(20px, env(safe-area-inset-top)) 16px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { margin: 0 0 4px; font-size: 1.3rem; }
+  header .sub { font-size: 0.82rem; color: #d1d5db; }
+  .progress-wrap {
+    margin-top: 12px;
+    background: #374151;
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #22c55e;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-text { font-size: 0.75rem; color: #d1d5db; margin-top: 6px; }
+
+  .tabs {
+    display: flex;
+    background: white;
+    position: sticky;
+    top: 108px;
+    z-index: 9;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+  }
+  .tab.active { color: var(--text); border-bottom-color: #22c55e; }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg);
+  }
+  .controls button {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: white;
+    color: var(--text);
+  }
+
+  main { padding: 8px 16px; }
+  .category { margin-bottom: 16px; }
+  .category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 10px 10px 0 0;
+    font-weight: 700;
+    font-size: 0.93rem;
+    color: white;
+  }
+  .category-header .count { font-size: 0.72rem; font-weight: 500; opacity: 0.9; }
+  .cat-grocery { background: var(--grocery); }
+  .cat-oils { background: var(--oils); }
+  .cat-personal { background: var(--personal); }
+  .cat-home { background: var(--home); }
+
+  .item-list {
+    background: var(--card);
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .item:last-child { border-bottom: none; }
+  .item.checked .item-name { text-decoration: line-through; color: var(--muted); }
+  .item.not-buying { opacity: 0.55; }
+
+  input[type="checkbox"].buycheck {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    accent-color: #22c55e;
+  }
+  .item-name { flex: 1; font-size: 0.94rem; }
+  .item-note { font-size: 0.7rem; color: var(--muted); display: block; margin-top: 2px; }
+
+  .toggle {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 24px;
+    transition: 0.2s;
+  }
+  .slider:before {
+    content: "";
+    position: absolute;
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  .toggle input:checked + .slider { background: #22c55e; }
+  .toggle input:checked + .slider:before { transform: translateX(18px); }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 1.1rem;
+    padding: 2px 4px;
+  }
+
+  .add-row {
+    display: flex;
+    gap: 6px;
+    padding: 10px 12px;
+    background: #fafafa;
+  }
+  .add-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .add-row button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--text);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-top: 1px solid var(--border);
+    padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 10px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  footer button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.88rem;
+  }
+  #resetBtn { background: #fee2e2; color: #b91c1c; }
+  #installBtn { background: #22c55e; color: white; display: none; }
+  #shareBtn { background: #1f2937; color: white; }
+
+  .empty { text-align: center; color: var(--muted); padding: 30px 0; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛒 DMart Checklist</h1>
+  <div class="sub" id="subLine">Toggle "buy this month", then tick off as you shop.</div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-text" id="progressText">0 of 0 checked</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="shop" onclick="switchTab('shop')">🛍️ Shopping List</div>
+  <div class="tab" data-tab="manage" onclick="switchTab('manage')">⚙️ Manage Items</div>
+</div>
+
+<div class="controls" id="shopControls">
+  <button onclick="checkAll(true)">Check All</button>
+  <button onclick="checkAll(false)">Uncheck All</button>
+</div>
+
+<main id="mainList"></main>
+
+<footer>
+  <button id="resetBtn" onclick="resetMonth()">🔄 New Month</button>
+  <button id="installBtn" onclick="installApp()">⬇️ Install App</button>
+  <button id="shareBtn" onclick="window.print()">🖨️ Print</button>
+</footer>
+
+<script>
+const DEFAULT_DATA = [
+  { cat: "Grocery", class: "grocery", items: [
+    { name: "Pillsbury Atta", buy: true, note: "Check stock" },
+    { name: "Tata Toor Dal", buy: true, note: "If low" },
+    { name: "Tata Moong Dal", buy: true, note: "If low" },
+    { name: "Chana Dal", buy: false },
+    { name: "Poha", buy: true },
+    { name: "Idli Rava", buy: true },
+    { name: "Kesari Rava", buy: true },
+    { name: "Bambino Vermicelli", buy: true },
+    { name: "Oats", buy: true },
+    { name: "Tea", buy: true },
+    { name: "Salt", buy: true },
+    { name: "Tamarind", buy: false },
+    { name: "Jeera", buy: false },
+    { name: "Mustard Seeds", buy: false },
+    { name: "Turmeric Powder", buy: false },
+    { name: "Chilli Powder", buy: false },
+    { name: "Dhaniya Powder", buy: false },
+    { name: "Whole Red Chilli", buy: false }
+  ]},
+  { cat: "Oils & Ghee", class: "oils", items: [
+    { name: "Saffola Active Oil", buy: true },
+    { name: "Fortune Mustard Oil", buy: true },
+    { name: "Milky Mist Ghee", buy: true }
+  ]},
+  { cat: "Personal Care", class: "personal", items: [
+    { name: "L'Oreal Shampoo", buy: true },
+    { name: "Himalaya Body Lotion", buy: true },
+    { name: "Colgate Toothpaste", buy: true },
+    { name: "Glow & Lovely", buy: true },
+    { name: "Bath Soap", buy: false },
+    { name: "Talcum Powder", buy: false }
+  ]},
+  { cat: "Home Care", class: "home", items: [
+    { name: "Harpic", buy: true },
+    { name: "Domex", buy: true },
+    { name: "Floor Cleaner", buy: true },
+    { name: "Surf Excel", buy: true },
+    { name: "Dishwash Liquid", buy: true },
+    { name: "Scrub Pad", buy: false },
+    { name: "Scouring Pad", buy: false },
+    { name: "Dustbin Covers", buy: false },
+    { name: "Agarbatti", buy: false }
+  ]}
+];
+
+const DATA_KEY = "dmart_data_v2";
+const CHECK_KEY = "dmart_checked_v2";
+let currentTab = "shop";
+
+function loadData() {
+  const raw = localStorage.getItem(DATA_KEY);
+  if (raw) return JSON.parse(raw);
+  saveData(DEFAULT_DATA);
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function saveData(d) { localStorage.setItem(DATA_KEY, JSON.stringify(d)); }
+
+function loadChecked() {
+  try { return JSON.parse(localStorage.getItem(CHECK_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveChecked(c) { localStorage.setItem(CHECK_KEY, JSON.stringify(c)); }
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  document.getElementById("shopControls").style.display = tab === "shop" ? "flex" : "none";
+  document.getElementById("subLine").textContent = tab === "shop"
+    ? 'Tick off as you shop. Only items marked "buying" show here.'
+    : 'Toggle "buying this month" on/off, or add/remove items.';
+  render();
+}
+
+function render() {
+  const data = loadData();
+  const checked = loadChecked();
+  const main = document.getElementById("mainList");
+  main.innerHTML = "";
+  let totalBuy = 0, checkedBuy = 0;
+
+  data.forEach((group, gi) => {
+    const itemsToShow = currentTab === "shop"
+      ? group.items.filter(i => i.buy)
+      : group.items;
+
+    if (currentTab === "shop" && itemsToShow.length === 0) return;
+
+    const groupChecked = group.items.filter(i => i.buy && checked[group.cat+"_"+i.name]).length;
+    const groupTotal = group.items.filter(i => i.buy).length;
+
+    const catDiv = document.createElement("div");
+    catDiv.className = "category";
+    catDiv.innerHTML = `
+      <div class="category-header cat-${group.class}">
+        <span>${group.cat}</span>
+        <span class="count">${currentTab === "shop" ? groupChecked + "/" + groupTotal : group.items.length + " items"}</span>
+      </div>
+      <div class="item-list"></div>
+    `;
+    const list = catDiv.querySelector(".item-list");
+
+    itemsToShow.forEach((item, ii) => {
+      const key = group.cat + "_" + item.name;
+      const isChecked = !!checked[key];
+      if (item.buy) { totalBuy++; if (isChecked) checkedBuy++; }
+
+      const row = document.createElement("div");
+
+      if (currentTab === "shop") {
+        row.className = "item" + (isChecked ? " checked" : "");
+        row.innerHTML = `
+          <input type="checkbox" class="buycheck" ${isChecked ? "checked" : ""}>
+          <div style="flex:1">
+            <span class="item-name">${item.name}</span>
+            ${item.note ? `<span class="item-note">${item.note}</span>` : ""}
+          </div>
+        `;
+        row.querySelector("input").addEventListener("change", (e) => {
+          const c = loadChecked();
+          c[key] = e.target.checked;
+          saveChecked(c);
+          render();
+        });
+      } else {
+        row.className = "item" + (item.buy ? "" : " not-buying");
+        row.innerHTML = `
+          <label class="toggle">
+            <input type="checkbox" ${item.buy ? "checked" : ""}>
+            <span class="slider"></span>
+          </label>
+          <div style="flex:1">
+            <span class="item-name">${item.name}</span>
+            ${item.note ? `<span class="item-note">${item.note}</span>` : ""}
+          </div>
+          <button class="del-btn" title="Delete item">✕</button>
+        `;
+        row.querySelector(".toggle input").addEventListener("change", (e) => {
+          const d = loadData();
+          d[gi].items.find(x => x.name === item.name).buy = e.target.checked;
+          saveData(d);
+          render();
+        });
+        row.querySelector(".del-btn").addEventListener("click", () => {
+          if (confirm(`Remove "${item.name}"?`)) {
+            const d = loadData();
+            d[gi].items = d[gi].items.filter(x => x.name !== item.name);
+            saveData(d);
+            render();
+          }
+        });
+      }
+      list.appendChild(row);
+    });
+
+    if (currentTab === "manage") {
+      const addRow = document.createElement("div");
+      addRow.className = "add-row";
+      addRow.innerHTML = `
+        <input type="text" placeholder="Add item to ${group.cat}...">
+        <button>Add</button>
+      `;
+      const input = addRow.querySelector("input");
+      const btn = addRow.querySelector("button");
+      const addItem = () => {
+        const name = input.value.trim();
+        if (!name) return;
+        const d = loadData();
+        d[gi].items.push({ name, buy: true });
+        saveData(d);
+        render();
+      };
+      btn.addEventListener("click", addItem);
+      input.addEventListener("keypress", (e) => { if (e.key === "Enter") addItem(); });
+      list.appendChild(addRow);
+    }
+
+    main.appendChild(catDiv);
+  });
+
+  if (currentTab === "shop" && totalBuy === 0) {
+    main.innerHTML = `<div class="empty">No items marked "buying this month" yet.<br>Go to <b>Manage Items</b> to turn some on.</div>`;
+  }
+
+  document.getElementById("progressText").textContent = `${checkedBuy} of ${totalBuy} checked`;
+  document.getElementById("progressBar").style.width = totalBuy ? (checkedBuy/totalBuy*100) + "%" : "0%";
+}
+
+function checkAll(val) {
+  const data = loadData();
+  const c = {};
+  data.forEach(g => g.items.forEach(i => { if (i.buy) c[g.cat+"_"+i.name] = val; }));
+  saveChecked(c);
+  render();
+}
+
+function resetMonth() {
+  if (confirm("Uncheck everything for a fresh month? (Your buy toggles stay as-is)")) {
+    checkAll(false);
+  }
+}
+
+// PWA install prompt
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("installBtn").style.display = "block";
+});
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  } else {
+    alert('On iPhone: tap the Share button, then "Add to Home Screen".');
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+render();
+</script>
+
+</body>
+</html>

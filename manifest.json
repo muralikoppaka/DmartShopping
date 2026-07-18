@@ -1,0 +1,17 @@
+{
+  "name": "DMart Monthly Checklist",
+  "short_name": "DMart List",
+  "description": "Monthly shopping checklist for DMart purchases",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f7f4",
+  "theme_color": "#1f2937",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
