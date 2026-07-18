@@ -124,6 +124,17 @@
     border-radius: 0 0 10px 10px;
     overflow: hidden;
   }
+  .cat-subtotal {
+    background: #f9fafb;
+    text-align: right;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    border-radius: 0 0 10px 10px;
+    margin-top: -1px;
+    border-top: 1px dashed var(--border);
+  }
+  .cat-subtotal b { color: var(--text); }
   .item {
     display: flex;
     align-items: center;
@@ -450,6 +461,10 @@ function render() {
 
     const groupChecked = group.items.filter(i => i.buy && checked[group.cat+"_"+i.name]).length;
     const groupTotal = group.items.filter(i => i.buy).length;
+    const groupCost = group.items
+      .filter(i => i.buy && checked[group.cat+"_"+i.name] && i.price)
+      .reduce((sum, i) => sum + (i.price * (i.qty || 1)), 0);
+    const showSubtotal = currentTab === "shop" && groupCost > 0;
 
     const catDiv = document.createElement("div");
     catDiv.className = "category";
@@ -458,7 +473,8 @@ function render() {
         <span>${group.cat}</span>
         <span class="count">${currentTab === "shop" ? groupChecked + "/" + groupTotal : group.items.length + " items"}</span>
       </div>
-      <div class="item-list"></div>
+      <div class="item-list" style="${showSubtotal ? 'border-radius:0' : ''}"></div>
+      ${showSubtotal ? `<div class="cat-subtotal">Subtotal: <b>₹${groupCost.toFixed(2)}</b></div>` : ""}
     `;
     const list = catDiv.querySelector(".item-list");
 
