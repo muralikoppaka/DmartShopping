@@ -54,6 +54,16 @@
     transition: width 0.3s ease;
   }
   .progress-text { font-size: 0.75rem; color: #d1d5db; margin-top: 6px; }
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #374151;
+  }
+  .total-label { font-size: 0.8rem; color: #d1d5db; }
+  .total-value { font-size: 1.15rem; font-weight: 700; color: #22c55e; }
 
   .tabs {
     display: flex;
@@ -133,6 +143,62 @@
   }
   .item-name { flex: 1; font-size: 0.94rem; }
   .item-note { font-size: 0.7rem; color: var(--muted); display: block; margin-top: 2px; }
+  .item-price {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    min-width: 52px;
+    text-align: right;
+  }
+  .pack-badge {
+    font-size: 0.65rem;
+    background: #f3f4f6;
+    color: var(--muted);
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    font-weight: 500;
+  }
+  .qty-stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .qty-stepper button {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .qty-stepper .qty-num {
+    min-width: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .pack-input {
+    width: 62px;
+    padding: 6px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+  .price-input {
+    width: 68px;
+    padding: 6px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    text-align: right;
+  }
 
   .toggle {
     position: relative;
@@ -224,6 +290,10 @@
   <div class="sub" id="subLine">Toggle "buy this month", then tick off as you shop.</div>
   <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
   <div class="progress-text" id="progressText">0 of 0 checked</div>
+  <div class="total-row" id="totalRow" style="display:none">
+    <span class="total-label">Total (checked items)</span>
+    <span class="total-value" id="totalValue">₹0</span>
+  </div>
 </header>
 
 <div class="tabs">
@@ -251,49 +321,93 @@ const DEFAULT_DATA = [
     { name: "Tata Toor Dal", buy: true, note: "If low" },
     { name: "Tata Moong Dal", buy: true, note: "If low" },
     { name: "Chana Dal", buy: false },
-    { name: "Poha", buy: true },
+    { name: "Poha Jada", buy: true, price: 192.00, pack: "1kg" },
     { name: "Idli Rava", buy: true },
-    { name: "Kesari Rava", buy: true },
+    { name: "Kesari Rava", buy: true, price: 51.00, pack: "500g" },
     { name: "Bambino Vermicelli", buy: true },
     { name: "Oats", buy: true },
     { name: "Tea", buy: true },
-    { name: "Salt", buy: true },
+    { name: "Salt (Tata)", buy: true, price: 28.00, pack: "1kg" },
     { name: "Tamarind", buy: false },
-    { name: "Jeera", buy: false },
+    { name: "Jeera", buy: false, price: 94.00, pack: "100g", qty: 2 },
     { name: "Mustard Seeds", buy: false },
-    { name: "Turmeric Powder", buy: false },
-    { name: "Chilli Powder", buy: false },
+    { name: "Turmeric Powder (MTR)", buy: false, price: 42.00, pack: "100g" },
+    { name: "Chilli Powder (Everest Coriander)", buy: false, price: 75.60, pack: "200g" },
     { name: "Dhaniya Powder", buy: false },
-    { name: "Whole Red Chilli", buy: false }
+    { name: "Whole Red Chilli (Kashmiri)", buy: false, price: 147.50, pack: "250g" },
+    { name: "Maggi Nutlicious", buy: false, price: 145.00, pack: "435g", qty: 2, note: "Rate 145 x2" },
+    { name: "Sunfeast Yippee", buy: false, price: 72.00, pack: "280g" },
+    { name: "Fortune Kachi Ghani Mustard Oil", buy: false, price: 192.00, pack: "910ml" },
+    { name: "Fortune Sunflower Oil", buy: false, price: 159.00, pack: "800ml", qty: 2, note: "Rate 159 x2" },
+    { name: "Rawa 1Kg", buy: false, price: 46.00, pack: "1kg" },
+    { name: "Nutraj Cardamom", buy: false, price: 82.00, pack: "20g" },
+    { name: "Papad Boat (Appalam)", buy: false, price: 32.00, pack: "200ml" },
+    { name: "Papad Boat (Karam)", buy: false, price: 30.00, pack: "200ml" },
+    { name: "Sabudana Papad", buy: false, price: 15.00, pack: "80g" },
+    { name: "Tata Sampann Turmeric", buy: false, price: 175.00, pack: "1kg" },
+    { name: "Brown Top Millet", buy: false, price: 101.00, pack: "500g" },
+    { name: "Rai (Mustard Seeds Small)", buy: false, price: 18.00, pack: "100g" },
+    { name: "Nescafe Caramel", buy: false, price: 52.00, pack: "200ml" },
+    { name: "Knorr Chinese Soup", buy: false, price: 90.00, pack: "42g" },
+    { name: "Dheepam Lamp Oil", buy: false, price: 40.00, pack: "425g" },
+    { name: "Parrys Pure Sugar", buy: false, price: 46.00, pack: "1kg" },
+    { name: "Knorr Classic Soup", buy: false, price: 147.50, pack: "516g" },
+    { name: "Shubha Kart Sambar Powder", buy: false, price: 40.00 }
   ]},
   { cat: "Oils & Ghee", class: "oils", items: [
-    { name: "Saffola Active Oil", buy: true },
+    { name: "Saffola Active Oil", buy: true, price: 220.00, pack: "500g" },
     { name: "Fortune Mustard Oil", buy: true },
+    { name: "Bambino Roasted Vermicelli", buy: false, price: 99.00, pack: "850g", qty: 2, note: "Rate 99 x2" },
     { name: "Milky Mist Ghee", buy: true }
+  ]},
+  { cat: "Dairy & Snacks", class: "oils", items: [
+    { name: "Milky Mist Fresh Curd", buy: false, price: 33.00, pack: "100g", note: "From bill 1" },
+    { name: "Milky Mist Malai Curd", buy: false, price: 33.00, pack: "100g", note: "From bill 1" },
+    { name: "Milky Mist Mishti Doi", buy: false, price: 17.50, pack: "100g", note: "From bill 1" },
+    { name: "Milky Mist Cream", buy: false, price: 49.00, pack: "500ml", note: "From bill 2" },
+    { name: "Minute Maid", buy: false, price: 42.50, pack: "1L" },
+    { name: "Brook Bond Red Tea", buy: false, price: 46.00, pack: "500g", note: "Rate 46, taxable shows 273 for 5x" },
+    { name: "Kitchen King Masala", buy: false, price: 103.00, pack: "500g" },
+    { name: "Kinder Joy", buy: false, price: 45.00, pack: "20g", note: "From bill 1" },
+    { name: "Nestle KitKat", buy: false, price: 60.00, pack: "40g", note: "From bill 1" }
   ]},
   { cat: "Personal Care", class: "personal", items: [
     { name: "L'Oreal Shampoo", buy: true },
-    { name: "Himalaya Body Lotion", buy: true },
-    { name: "Colgate Toothpaste", buy: true },
-    { name: "Glow & Lovely", buy: true },
-    { name: "Bath Soap", buy: false },
-    { name: "Talcum Powder", buy: false }
+    { name: "Himalaya Bright Body Lotion", buy: true, price: 199.50, pack: "400ml" },
+    { name: "Colgate Swarna Toothpaste", buy: true, price: 159.96, pack: "200g" },
+    { name: "Colgate Visible White", buy: false, price: 148.00, pack: "100g" },
+    { name: "Glow & Lovely", buy: true, price: 129.00, pack: "50g" },
+    { name: "Bath Soap (Pears)", buy: false, price: 106.00, pack: "250g" },
+    { name: "Talcum Powder", buy: false },
+    { name: "Nivea Lume Even Tone", buy: false, price: 148.00, pack: "100ml" },
+    { name: "Mangaldeep Sandalwood Agarbatti", buy: false, price: 60.00 },
+    { name: "Mangaldeep Fusion Agarbatti", buy: false, price: 99.00 },
+    { name: "Mangaldeep Loban Cone", buy: false, price: 55.00 },
+    { name: "Cycle Navin Pure Sandal", buy: false, price: 52.00 }
   ]},
   { cat: "Home Care", class: "home", items: [
-    { name: "Harpic", buy: true },
+    { name: "Harpic Hygiene Toilet Cleaner", buy: true, price: 92.00, pack: "26ml" },
     { name: "Domex", buy: true },
     { name: "Floor Cleaner", buy: true },
-    { name: "Surf Excel", buy: true },
-    { name: "Dishwash Liquid", buy: true },
+    { name: "Surf Excel Easy Wash", buy: true, price: 148.00, pack: "1kg" },
+    { name: "Dishwash Liquid (Reflect)", buy: true, price: 110.00, pack: "1L" },
     { name: "Scrub Pad", buy: false },
     { name: "Scouring Pad", buy: false },
     { name: "Dustbin Covers", buy: false },
-    { name: "Agarbatti", buy: false }
+    { name: "Agarbatti", buy: false },
+    { name: "Godrej Ezee Wash", buy: false, price: 78.00, pack: "18ml" },
+    { name: "Good Home Room Freshener", buy: false, price: 30.00, pack: "50g" },
+    { name: "Force 10 Toilet Cleaner", buy: false, price: 60.00, pack: "750ml" }
+  ]},
+  { cat: "Clothing (occasional)", class: "personal", items: [
+    { name: "T-Shirt Girl Fancy Embroidered", buy: false, price: 249.00, qty: 2, note: "From bill 1" },
+    { name: "Kurta Ladies", buy: false, price: 299.00, note: "From bill 1" },
+    { name: "Top Girl Georgette", buy: false, price: 199.00, note: "From bill 1" }
   ]}
 ];
 
-const DATA_KEY = "dmart_data_v2";
-const CHECK_KEY = "dmart_checked_v2";
+const DATA_KEY = "dmart_data_v3";
+const CHECK_KEY = "dmart_checked_v3";
 let currentTab = "shop";
 
 function loadData() {
@@ -325,7 +439,7 @@ function render() {
   const checked = loadChecked();
   const main = document.getElementById("mainList");
   main.innerHTML = "";
-  let totalBuy = 0, checkedBuy = 0;
+  let totalBuy = 0, checkedBuy = 0, totalCost = 0;
 
   data.forEach((group, gi) => {
     const itemsToShow = currentTab === "shop"
@@ -356,18 +470,40 @@ function render() {
       const row = document.createElement("div");
 
       if (currentTab === "shop") {
+        const qty = item.qty || 1;
+        if (item.buy && isChecked && item.price) totalCost += item.price * qty;
         row.className = "item" + (isChecked ? " checked" : "");
         row.innerHTML = `
           <input type="checkbox" class="buycheck" ${isChecked ? "checked" : ""}>
           <div style="flex:1">
-            <span class="item-name">${item.name}</span>
+            <span class="item-name">${item.name}${item.pack ? `<span class="pack-badge">${item.pack}</span>` : ""}</span>
             ${item.note ? `<span class="item-note">${item.note}</span>` : ""}
           </div>
+          <div class="qty-stepper">
+            <button class="qty-minus">−</button>
+            <span class="qty-num">${qty}</span>
+            <button class="qty-plus">+</button>
+          </div>
+          ${item.price ? `<span class="item-price">₹${(item.price * qty).toFixed(2)}</span>` : ""}
         `;
         row.querySelector("input").addEventListener("change", (e) => {
           const c = loadChecked();
           c[key] = e.target.checked;
           saveChecked(c);
+          render();
+        });
+        row.querySelector(".qty-plus").addEventListener("click", () => {
+          const d = loadData();
+          const it = d[gi].items.find(x => x.name === item.name);
+          it.qty = (it.qty || 1) + 1;
+          saveData(d);
+          render();
+        });
+        row.querySelector(".qty-minus").addEventListener("click", () => {
+          const d = loadData();
+          const it = d[gi].items.find(x => x.name === item.name);
+          it.qty = Math.max(1, (it.qty || 1) - 1);
+          saveData(d);
           render();
         });
       } else {
@@ -381,11 +517,26 @@ function render() {
             <span class="item-name">${item.name}</span>
             ${item.note ? `<span class="item-note">${item.note}</span>` : ""}
           </div>
+          <input type="text" class="pack-input" placeholder="pack" value="${item.pack || ''}">
+          <input type="number" class="price-input" placeholder="₹ price" step="0.01" value="${item.price != null ? item.price : ''}">
           <button class="del-btn" title="Delete item">✕</button>
         `;
         row.querySelector(".toggle input").addEventListener("change", (e) => {
           const d = loadData();
           d[gi].items.find(x => x.name === item.name).buy = e.target.checked;
+          saveData(d);
+          render();
+        });
+        row.querySelector(".pack-input").addEventListener("change", (e) => {
+          const d = loadData();
+          d[gi].items.find(x => x.name === item.name).pack = e.target.value.trim() || null;
+          saveData(d);
+          render();
+        });
+        row.querySelector(".price-input").addEventListener("change", (e) => {
+          const d = loadData();
+          const val = parseFloat(e.target.value);
+          d[gi].items.find(x => x.name === item.name).price = isNaN(val) ? null : val;
           saveData(d);
           render();
         });
@@ -432,6 +583,14 @@ function render() {
 
   document.getElementById("progressText").textContent = `${checkedBuy} of ${totalBuy} checked`;
   document.getElementById("progressBar").style.width = totalBuy ? (checkedBuy/totalBuy*100) + "%" : "0%";
+
+  const totalRow = document.getElementById("totalRow");
+  if (currentTab === "shop" && checkedBuy > 0) {
+    totalRow.style.display = "flex";
+    document.getElementById("totalValue").textContent = "₹" + totalCost.toFixed(2);
+  } else {
+    totalRow.style.display = "none";
+  }
 }
 
 function checkAll(val) {
